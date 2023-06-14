@@ -95,6 +95,7 @@ class EPrompt(nn.Module):
             similarity = similarity.t() # B, pool_size
 
             (similarity_top_k, idx) = torch.topk(similarity, k=self.top_k, dim=1) # B, top_k
+            print("predict idx: ", idx)
             out['similarity'] = similarity
 
             if self.batchwise_prompt:
@@ -114,6 +115,7 @@ class EPrompt(nn.Module):
                 idx = prompt_mask # B, top_k
             
             out['prompt_idx'] = idx
+
             if self.use_prefix_tune_for_e_prompt:
                 batched_prompt_raw = self.prompt[:,:,idx]  # num_layers, B, top_k, length, C
                 num_layers, dual, batch_size, top_k, length, num_heads, heads_embed_dim = batched_prompt_raw.shape
