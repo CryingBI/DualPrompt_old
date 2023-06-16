@@ -123,7 +123,7 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
             target_logits_raw = torch.Tensor([task_id])
             target_logits = target_logits_raw.expand(input.shape[0], -1).to(device, non_blocking=True)
             z = torch.eq(idx, target_logits).to(device, non_blocking=True).sum().item()
-            sample_predict_true += z
+            sample_predict_task_true += z
 
             if args.task_inc and class_mask is not None:
                 #adding mask to output logits
