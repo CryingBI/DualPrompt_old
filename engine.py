@@ -97,7 +97,7 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test: [Task {}]'.format(task_id + 1)
-
+    sample_predict_task_true = 0
     # switch to evaluation mode
     model.eval()
     original_model.eval()
@@ -117,6 +117,13 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
             
             output = model(input, task_id=task_id, cls_features=cls_features)
             logits = output['logits']
+            
+            #predict-task id
+            idx = output['prompt_idx']
+            target_logits_raw = torch.Tensor([task_id])
+            target_logits = target_logits_raw.expand(input.shape[0], -1).to(device, non_blocking=True)
+            z = torch.eq(idx, target_logits).to(device, non_blocking=True).sum().item()
+            sample_predict_true += z
 
             if args.task_inc and class_mask is not None:
                 #adding mask to output logits
@@ -134,6 +141,7 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
             metric_logger.meters['Acc@1'].update(acc1.item(), n=input.shape[0])
             metric_logger.meters['Acc@5'].update(acc5.item(), n=input.shape[0])
 
+    print("sample_predict_task_true:", sample_predict_task_true)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
@@ -261,3 +269,42 @@ def train_and_evaluate(model: torch.nn.Module, model_without_ddp: torch.nn.Modul
         if args.output_dir and utils.is_main_process():
             with open(os.path.join(args.output_dir, '{}_stats.txt'.format(datetime.datetime.now().strftime('log_%Y_%m_%d_%H_%M'))), 'a') as f:
                 f.write(json.dumps(log_stats) + '\n')
+
+
+def evaluate_task_predict(model: torch.nn.Module, original_model: torch.nn.Module, data_loader, 
+            device, task_id=-1, class_mask=None, args=None,):
+    
+    criterion = torch.nn.CrossEntropyLoss()
+
+    metric_logger = utils.MetricLogger(delimiter="  ")
+    header = 'Test task predict: [Task {}]'.format(task_id + 1)
+    sample_predict_true = 0
+
+    original_model.eval()
+    model.eval()
+    
+    with torch.no_grad():
+        for input, target in metric_logger.log_every(data_loader, args.print_freq, header):
+            input = input.to(device, non_blocking=True)
+            #target = target.to(device, non_blocking=True)
+            target_logits_raw = torch.Tensor([task_id])
+            target_logits = target_logits_raw.expand(input.shape[0], -1).to(device, non_blocking=True)
+
+            # compute output
+            if original_model is not None:
+                output = original_model(input, task_infer=None)
+                cls_features = output['pre_logits']
+            else:
+                cls_features = None
+            
+            logits = task_model(cls_features)
+
+            prob = F.softmax(logits, dim=1)
+
+            task_id_infer = torch.argmax(prob, dim=1)
+            task_id_infer = task_id_infer.unsqueeze(1).to(device, non_blocking=True)
+
+            z = torch.eq(task_id_infer, target_logits).to(device, non_blocking=True).sum().item()
+            sample_predict_true += z
+    
+    print("sample_predict_true", sample_predict_true)
