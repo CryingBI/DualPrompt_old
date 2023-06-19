@@ -81,7 +81,7 @@ def get_args_parser(subparsers):
     subparsers.add_argument('--use_prefix_tune_for_g_prompt', default=True, type=bool, help='if using the prefix tune for G-Prompt')
     
     # E-Prompt parameters
-    subparsers.add_argument('--use_e_prompt', default=True, type=bool, help='if using the E-Prompt')
+    subparsers.add_argument('--use_e_prompt', default=False, type=bool, help='if using the E-Prompt')
     subparsers.add_argument('--e_prompt_layer_idx', default=[2, 3, 4], type=int, nargs = "+", help='the layer index of the E-Prompt')
     subparsers.add_argument('--use_prefix_tune_for_e_prompt', default=True, type=bool, help='if using the prefix tune for E-Prompt')
 
