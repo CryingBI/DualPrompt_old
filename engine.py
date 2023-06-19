@@ -97,7 +97,7 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test: [Task {}]'.format(task_id + 1)
-    sample_predict_task_true = 0
+    #sample_predict_task_true = 0
     # switch to evaluation mode
     model.eval()
     original_model.eval()
@@ -118,12 +118,12 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
             output = model(input, task_id=task_id, cls_features=cls_features)
             logits = output['logits']
             
-            #predict-task id
-            idx = output['prompt_idx']
-            target_logits_raw = torch.Tensor([task_id])
-            target_logits = target_logits_raw.expand(input.shape[0], -1).to(device, non_blocking=True)
-            z = torch.eq(idx, target_logits).to(device, non_blocking=True).sum().item()
-            sample_predict_task_true += z
+            # #predict-task id
+            # idx = output['prompt_idx']
+            # target_logits_raw = torch.Tensor([task_id])
+            # target_logits = target_logits_raw.expand(input.shape[0], -1).to(device, non_blocking=True)
+            # z = torch.eq(idx, target_logits).to(device, non_blocking=True).sum().item()
+            # sample_predict_task_true += z
 
             if args.task_inc and class_mask is not None:
                 #adding mask to output logits
