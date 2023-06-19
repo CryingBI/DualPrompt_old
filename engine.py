@@ -141,7 +141,7 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
             metric_logger.meters['Acc@1'].update(acc1.item(), n=input.shape[0])
             metric_logger.meters['Acc@5'].update(acc5.item(), n=input.shape[0])
 
-    print("sample_predict_task_true:", sample_predict_task_true)
+    #print("sample_predict_task_true:", sample_predict_task_true)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
