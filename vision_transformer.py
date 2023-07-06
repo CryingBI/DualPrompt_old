@@ -467,7 +467,7 @@ class VisionTransformer(nn.Module):
         self.norm = norm_layer(embed_dim) if not use_fc_norm else nn.Identity()
 
         # Classifier Head
-        # self.fc_norm = norm_layer(embed_dim) if use_fc_norm else nn.Identity()
+        self.fc_norm = norm_layer(embed_dim) if use_fc_norm else nn.Identity()
         # self.head = nn.Sequential(
         #     nn.Linear(self.embed_dim, 512), 
         #     nn.ReLU(),
