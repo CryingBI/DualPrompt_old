@@ -97,7 +97,7 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test: [Task {}]'.format(task_id + 1)
-    sample_predict_task_true = 0
+    #sample_predict_task_true = 0
     # switch to evaluation mode
     model.eval()
     original_model.eval()
@@ -118,12 +118,12 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
             output = model(input, task_id=task_id, cls_features=cls_features)
             logits = output['logits']
             
-            #predict-task id
-            idx = output['prompt_idx']
-            target_logits_raw = torch.Tensor([task_id])
-            target_logits = target_logits_raw.expand(input.shape[0], -1).to(device, non_blocking=True)
-            z = torch.eq(idx, target_logits).to(device, non_blocking=True).sum().item()
-            sample_predict_task_true += z
+            # #predict-task id
+            # idx = output['prompt_idx']
+            # target_logits_raw = torch.Tensor([task_id])
+            # target_logits = target_logits_raw.expand(input.shape[0], -1).to(device, non_blocking=True)
+            # z = torch.eq(idx, target_logits).to(device, non_blocking=True).sum().item()
+            # sample_predict_task_true += z
 
             if args.task_inc and class_mask is not None:
                 #adding mask to output logits
@@ -141,7 +141,7 @@ def evaluate(model: torch.nn.Module, original_model: torch.nn.Module, data_loade
             metric_logger.meters['Acc@1'].update(acc1.item(), n=input.shape[0])
             metric_logger.meters['Acc@5'].update(acc5.item(), n=input.shape[0])
 
-    print("sample_predict_task_true:", sample_predict_task_true)
+    #print("sample_predict_task_true:", sample_predict_task_true)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
@@ -189,48 +189,48 @@ def train_and_evaluate(model: torch.nn.Module, model_without_ddp: torch.nn.Modul
 
     for task_id in range(args.num_tasks):
         # Transfer previous learned prompt params to the new prompt
-        if args.prompt_pool and args.shared_prompt_pool:
-            if task_id > 0:
-                prev_start = (task_id - 1) * args.top_k
-                prev_end = task_id * args.top_k
+        # if args.prompt_pool and args.shared_prompt_pool:
+        #     if task_id > 0:
+        #         prev_start = (task_id - 1) * args.top_k
+        #         prev_end = task_id * args.top_k
 
-                cur_start = prev_end
-                cur_end = (task_id + 1) * args.top_k
+        #         cur_start = prev_end
+        #         cur_end = (task_id + 1) * args.top_k
 
-                if (prev_end > args.size) or (cur_end > args.size):
-                    pass
-                else:
-                    cur_idx = (slice(None), slice(None), slice(cur_start, cur_end)) if args.use_prefix_tune_for_e_prompt else (slice(None), slice(cur_start, cur_end))
-                    prev_idx = (slice(None), slice(None), slice(prev_start, prev_end)) if args.use_prefix_tune_for_e_prompt else (slice(None), slice(prev_start, prev_end))
+        #         if (prev_end > args.size) or (cur_end > args.size):
+        #             pass
+        #         else:
+        #             cur_idx = (slice(None), slice(None), slice(cur_start, cur_end)) if args.use_prefix_tune_for_e_prompt else (slice(None), slice(cur_start, cur_end))
+        #             prev_idx = (slice(None), slice(None), slice(prev_start, prev_end)) if args.use_prefix_tune_for_e_prompt else (slice(None), slice(prev_start, prev_end))
 
-                    with torch.no_grad():
-                        if args.distributed:
-                            model.module.e_prompt.prompt.grad.zero_()
-                            model.module.e_prompt.prompt[cur_idx] = model.module.e_prompt.prompt[prev_idx]
-                            optimizer.param_groups[0]['params'] = model.module.parameters()
-                        else:
-                            model.e_prompt.prompt.grad.zero_()
-                            model.e_prompt.prompt[cur_idx] = model.e_prompt.prompt[prev_idx]
-                            optimizer.param_groups[0]['params'] = model.parameters()
+        #             with torch.no_grad():
+        #                 if args.distributed:
+        #                     model.module.e_prompt.prompt.grad.zero_()
+        #                     model.module.e_prompt.prompt[cur_idx] = model.module.e_prompt.prompt[prev_idx]
+        #                     optimizer.param_groups[0]['params'] = model.module.parameters()
+        #                 else:
+        #                     model.e_prompt.prompt.grad.zero_()
+        #                     model.e_prompt.prompt[cur_idx] = model.e_prompt.prompt[prev_idx]
+        #                     optimizer.param_groups[0]['params'] = model.parameters()
                     
-        # Transfer previous learned prompt param keys to the new prompt
-        if args.prompt_pool and args.shared_prompt_key:
-            if task_id > 0:
-                prev_start = (task_id - 1) * args.top_k
-                prev_end = task_id * args.top_k
+        # # Transfer previous learned prompt param keys to the new prompt
+        # if args.prompt_pool and args.shared_prompt_key:
+        #     if task_id > 0:
+        #         prev_start = (task_id - 1) * args.top_k
+        #         prev_end = task_id * args.top_k
 
-                cur_start = prev_end
-                cur_end = (task_id + 1) * args.top_k
+        #         cur_start = prev_end
+        #         cur_end = (task_id + 1) * args.top_k
 
-                with torch.no_grad():
-                    if args.distributed:
-                        model.module.e_prompt.prompt_key.grad.zero_()
-                        model.module.e_prompt.prompt_key[cur_idx] = model.module.e_prompt.prompt_key[prev_idx]
-                        optimizer.param_groups[0]['params'] = model.module.parameters()
-                    else:
-                        model.e_prompt.prompt_key.grad.zero_()
-                        model.e_prompt.prompt_key[cur_idx] = model.e_prompt.prompt_key[prev_idx]
-                        optimizer.param_groups[0]['params'] = model.parameters()
+        #         with torch.no_grad():
+        #             if args.distributed:
+        #                 model.module.e_prompt.prompt_key.grad.zero_()
+        #                 model.module.e_prompt.prompt_key[cur_idx] = model.module.e_prompt.prompt_key[prev_idx]
+        #                 optimizer.param_groups[0]['params'] = model.module.parameters()
+        #             else:
+        #                 model.e_prompt.prompt_key.grad.zero_()
+        #                 model.e_prompt.prompt_key[cur_idx] = model.e_prompt.prompt_key[prev_idx]
+        #                 optimizer.param_groups[0]['params'] = model.parameters()
      
         # Create new optimizer for each task to clear optimizer status
         if task_id > 0 and args.reinit_optimizer:
