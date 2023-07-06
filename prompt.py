@@ -95,7 +95,7 @@ class EPrompt(nn.Module):
             similarity = similarity.t() # B, pool_size
 
             (similarity_top_k, idx) = torch.topk(similarity, k=self.top_k, dim=1) # B, top_k
-            print("predict idx: ", idx.squeeze()) #
+            # print("predict idx: ", idx.squeeze()) #
             out['similarity'] = similarity
 
             if self.batchwise_prompt:
