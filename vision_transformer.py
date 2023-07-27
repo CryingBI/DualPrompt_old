@@ -471,6 +471,8 @@ class VisionTransformer(nn.Module):
         self.head = nn.Sequential(
             nn.Linear(self.embed_dim, 512), 
             nn.ReLU(),
+            nn.Linear(512, 512), 
+            nn.ReLU(),
             nn.Linear(512, num_classes) if num_classes > 0 else nn.Identity())
         #self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
